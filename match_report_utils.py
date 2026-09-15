@@ -10,6 +10,7 @@ from mplsoccer import Pitch, VerticalPitch
 from adjustText import adjust_text
 import ast
 import plotly.graph_objects as go
+from matplotlib.gridspec import GridSpec
 
 # Initialise sofascore
 sofa = sfc.Sofascore()
@@ -939,7 +940,8 @@ def plot_momentum(home_colour, away_colour):
     plt.rcParams["font.family"] = "DIN Alternate"
 
     # Create a figire and axes
-    fig, ax = plt.subplots(1,1, figsize = (20,6))
+    fig, ax = plt.subplots(1,1, figsize = (20,6),
+                          facecolor = ("#404040"))
 
     # Set background colour
     ax.set_facecolor("#404040")
@@ -1006,17 +1008,27 @@ def plot_momentum(home_colour, away_colour):
     ax.set_xticks(range(0,91,5))
     ax.set_yticks([])
 
+    # Tick parameters
+    ax.tick_params(axis = "both",
+                  labelsize = 12,
+                  labelcolor = "#CCCCCC",
+                  color = "#CCCCCC")
+    # Spine colours
+    for spine in ax.spines.values():
+        spine.set_color("#CCCCCC")
+        spine.set_linewidth(1)
+        
     # Set title
     ax.set_title("Match Momentum",
-                fontsize = 18,
-                color = "#2E2E2E",
+                fontsize = 16,
+                color = "white",
                 pad = 10,
                 loc = "left")
     
     # Set x axis label
     ax.set_xlabel("Minutes",
-                 fontsize = 14,
-                 color = "#2E2E2E",
+                 fontsize = 12,
+                 color = "#CCCCCC",
                  loc = "center")
 
     # Labels for each half
@@ -1033,11 +1045,6 @@ def plot_momentum(home_colour, away_colour):
             color = "#CCCCCC",
             ha = "left",
             va = "bottom")
-    # Remove spines
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
-    ax.spines["left"].set_visible(False)
-    ax.spines["bottom"].set_visible(False)
     
     # Save the figure
     fig.savefig(figures_folder / "momentum_graph.png",
@@ -1097,7 +1104,8 @@ def plot_xg(home_team, home_colour,
     away_y = [0] + away_shots["total_xG"].tolist() + [away_shots["total_xG"].iloc[-1]]
 
     # Create a figure
-    fig, ax = plt.subplots(1,1,figsize = (16,9))
+    fig, ax = plt.subplots(1,1,figsize = (14,6),
+                          facecolor = "#404040")
 
     # Set background colour
     ax.set_facecolor("#404040")
@@ -1141,26 +1149,30 @@ def plot_xg(home_team, home_colour,
     ax.set_xlim(0,95)
     ax.set_xticks(range(0,91,5))
 
-    # Remove spines
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
-    ax.spines["left"].set_visible(False)
-    ax.spines["bottom"].set_visible(False)
-
+    # Tick parameters
+    ax.tick_params(axis = "both",
+                  labelsize = 12,
+                  labelcolor = "#CCCCCC",
+                  color = "#CCCCCC")
+    # Spine colours
+    for spine in ax.spines.values():
+        spine.set_color("#CCCCCC")
+        spine.set_linewidth(1.)
+        
     # Labels
     ax.set_xlabel("Minutes",
-                 fontsize = 14,
-                 color = "#2E2E2E",
+                 fontsize = 12,
+                 color = "#CCCCCC",
                  loc = "center")
-    ax.set_ylabel("Cumalative xG",
-                 fontsize = 14,
-                 color = "#2E2E2E",
+    ax.set_ylabel("Cumulative xG",
+                 fontsize = 12,
+                 color = "#CCCCCC",
                  loc = "center")
     # Set the title
     ax.set_title(f"xG: {home_team} {home_shots["total_xG"].iloc[-1]:.2f} - "
                  f"{away_shots["total_xG"].iloc[-1]:.2f} {away_team}",
-                 fontsize = 18,
-                 color = "#2E2E2E",
+                 fontsize = 16,
+                 color = "white",
                  pad = 10,
                  loc = "left")
 
@@ -1175,54 +1187,212 @@ def plot_xg(home_team, home_colour,
 
 # ---------------------------------------------
 
+# --------------------------------------------------
+# HELPER FUNCTION FOR SHOT MAP
+# --------------------------------------------------
+
+# Helper function for drawing a plotly pitch
+def add_plotly_half_pitch(fig):
+
+    # Pitch colours
+    pitch_colour = "#404040"
+    line_colour = "#CCCCCC"
+
+    # Pitch background
+    fig.add_shape(type = "rect",
+                 x0 = 0,
+                 y0 = 50,
+                 x1 = 100,
+                 y1 = 100,
+                 line = dict(color = line_colour,
+                            width = 1),
+                 fillcolor = pitch_colour,
+                 layer = "below")
+
+    # Penalty area 
+    penalty_length = 16.5 / 105 * 100
+    penalty_width = 40.32 / 68 * 100
+
+    penalty_x0 = (100 - penalty_width) / 2
+    penalty_x1 = (100 + penalty_width) / 2
+
+    penalty_y0 = 100 - penalty_length
+    penalty_y1 = 100
+
+    fig.add_shape(type = "rect",
+                 x0 = penalty_x0,
+                 y0 = penalty_y0,
+                 x1 = penalty_x1,
+                 y1 = penalty_y1,
+                 line = dict(color = line_colour,
+                            width = 1),
+                 fillcolor = "rgba(0,0,0,0)",
+                 layer = "below")
+
+    # Six yard box
+    six_yard_length = 5.5 / 105 * 100
+    six_yard_width = 18.32 / 68 * 100
+
+    six_x0 = (100 - six_yard_width) / 2
+    six_x1 = (100 + six_yard_width) / 2
+
+    six_y0 = 100 - six_yard_length
+    six_y1 = 100
+
+    fig.add_shape(type = "rect",
+                 x0 = six_x0,
+                 y0 = six_y0,
+                 x1 = six_x1,
+                 y1 = six_y1,
+                 line = dict(color = line_colour,
+                            width = 1),
+                 fillcolor = "rgba(0,0,0,0)",
+                 layer = "below")
+
+    # Penalty spot
+    penalty_spot = 11 / 105 * 100
+
+    penalty_spot_y = 100 - penalty_spot
+
+    fig.add_trace(go.Scatter(x = [50],
+                            y = [penalty_spot_y],
+                            mode = "markers",
+                            marker = dict(size = 5,
+                                         color = line_colour),
+                            hoverinfo = "skip",
+                            showlegend = False))
+
+    # Penalty arc
+    penalty_arc_radius_x = 9.15 / 68 * 100
+    penalty_arc_radius_y = 9.15 / 105 * 100
+
+    theta = np.linspace(np.pi, 2 * np.pi, 200)
+
+    arc_x = (50 + penalty_arc_radius_x * np.cos(theta))
+
+    arc_y = (penalty_spot_y + penalty_arc_radius_y * np.sin(theta))
+
+    # Only keep the section outside the penalty area
+    arc_mask = arc_y <= penalty_y0
+
+    fig.add_trace(go.Scatter(x = arc_x[arc_mask],
+                             y = arc_y[arc_mask],
+                             mode = "lines",
+                             line = dict(color = line_colour,
+                                       width = 1),
+                             hoverinfo = "skip",
+                             showlegend = False))
+    
+    # Centre circle
+    centre_radius_x = 9.15 / 68 * 100
+    centre_radius_y = 9.15 / 105 * 100
+
+    theta = np.linspace(0, np.pi, 200)
+
+    centre_circle_x = (50 + centre_radius_x * np.cos(theta))
+
+    centre_circle_y = (50 + centre_radius_y * np.sin(theta))
+
+    fig.add_trace(go.Scatter(x = centre_circle_x,
+                             y = centre_circle_y,
+                             mode = "lines",
+                             line = dict(color = line_colour,
+                                       width = 1),
+                             hoverinfo = "skip",
+                             showlegend = False))
+    
+    #  Goal
+    goal_width = 9 / 68 * 100
+
+    goal_x0 = (100 - goal_width) / 2
+    goal_x1 = (100 + goal_width) / 2
+
+    fig.add_shape(type = "rect",
+                  x0 = goal_x0,
+                  y0 = 100,
+                  x1 = goal_x1,
+                  y1 = 104,
+                  line = dict(color = line_colour,
+                            width = 2),
+                  fillcolor = "rgba(0,0,0,0)",
+                  layer = "above")
+
+    #   
+    fig.update_layout(width = 500,
+                      height = 350,
+                      margin = dict(l = 10,
+                                  r = 10,
+                                  t = 40,
+                                  b = 10),
+                      
+                      plot_bgcolor = pitch_colour,
+                      paper_bgcolor = pitch_colour,
+                      xaxis = dict(range = [0, 100],
+                                 showgrid = False,
+                                 showticklabels = False,
+                                 zeroline = False,
+                                 fixedrange = True),
+                      
+                      yaxis = dict(range = [50, 104],
+                                 showgrid = False,
+                                 showticklabels = False,
+                                 zeroline = False,
+                                 fixedrange = True,
+                                 scaleanchor = "x",
+                                 scaleratio = 1.25))
+
 
 # --------------------------------------------------
 # SHOT MAP FUNCTION
 # --------------------------------------------------
-def plot_shot_maps(home_team, away_team):
+def plot_shot_maps(team, home_team = True, interactive = False):
 
     # Define the folders
     data_folder = Path("data")
     figures_folder = Path("figures")
+    
+    # Create html folder if it doesn't exist
+    html_folder = Path("html")
+    html_folder.mkdir(exist_ok=True)
 
     # Load the shot data
     shots = pd.read_csv(data_folder / "shots.csv")
 
+    # Etract the teams shots
+    if home_team:
+        team_shots = shots[shots["isHome"] == True].copy()
+    else:
+        team_shots = shots[shots["isHome"] == False].copy()
+        
+    # Extract the player names
+    team_shots["playerName"] = team_shots["player"].apply(lambda x: ast.literal_eval(x)["shortName"])
+    
     # Split x and y shot locations
-    shots["playerCoordinates"] = shots["playerCoordinates"].apply(ast.literal_eval)
+    team_shots["playerCoordinates"] = team_shots["playerCoordinates"].apply(ast.literal_eval)
 
-    shots["x"] = shots["playerCoordinates"].apply(lambda d:d["x"])
-    shots["y"] = shots["playerCoordinates"].apply(lambda d:d["y"])
+    team_shots["x"] = team_shots["playerCoordinates"].apply(lambda d:d["x"])
+    team_shots["y"] = team_shots["playerCoordinates"].apply(lambda d:d["y"])
 
     # Transform the shots to the vertical, half pitch system
-    shots["plot_x"] = 100 - shots["y"]
-    shots["plot_y"] = 100 - shots["x"]
+    team_shots["plot_x"] = 100 - team_shots["y"]
+    team_shots["plot_y"] = 100 - team_shots["x"]
 
     # split shots by open play and set pieces
     open_play_situations = ["assisted", "fast-break", "regular"]
 
-    shots["xg_type"] = np.where(shots["situation"].isin(open_play_situations),
+    team_shots["xg_type"] = np.where(team_shots["situation"].isin(open_play_situations),
                                "open_play",
                                "set_piece")
-    
-    # Split home and away shots
-    home_shots = shots[shots["isHome"] == True].copy()
-    away_shots = shots[shots["isHome"] == False].copy()
 
     # Calculate home and away open play and set piece xg
-    home_open_xg = home_shots.loc[home_shots["xg_type"] == "open_play", "xg"].sum()
-    home_set_piece_xg = home_shots["xg"].sum() - home_open_xg
-
-    away_open_xg = away_shots.loc[away_shots["xg_type"] == "open_play", "xg"].sum()
-    away_set_piece_xg = away_shots["xg"].sum() - away_open_xg
+    open_xg = team_shots.loc[team_shots["xg_type"] == "open_play", "xg"].sum()
+    set_piece_xg = team_shots["xg"].sum() - open_xg
     
     # xG per shot calculation
-    home_xg_per_shot = home_shots["xg"].mean()
-    away_xg_per_shot = away_shots["xg"].mean()
+    xg_per_shot = team_shots["xg"].mean()
 
     # Shooting quality: xGOT - xG
-    home_qual = home_shots["xgot"].sum() - home_shots["xg"].sum()
-    away_qual = away_shots["xgot"].sum() - away_shots["xg"].sum()
+    shot_qual = team_shots["xgot"].sum() - team_shots["xg"].sum()
 
     # Define default font
     plt.rcParams["font.family"] = "DIN Alternate"
@@ -1234,176 +1404,254 @@ def plot_shot_maps(home_team, away_team):
                     "block" : "#E3773D",
                     "post" : "#BC3DE3"}
     
-    # --------- Create the figure -------------
-    
-    # Create the pitch
-    pitch = VerticalPitch(pitch_type = "opta",
-                  pitch_color = "#404040",
-                  line_color = "#CCCCCC",
-                  linewidth = 0.75,
-                  half = True)
-    
-    fig, ax = pitch.draw(nrows = 1,
-                         ncols = 2, 
-                         figsize = (16,9))
+    # -----------------------------------------------
+    # INTERACTIVE VERSION
+    # -----------------------------------------------
 
-   
+    if interactive:
 
-    # Plot the home shots on the first subplot
-    for _, shot in home_shots.iterrows():
+        # Create the interactive figure
+        fig = go.Figure()
 
-        colour = shot_colours[shot["shotType"]]
+        # USe the helper funciton to add the pitch
+        add_plotly_half_pitch(fig)
+
+        # Hover data
+        team_customdata = team_shots[["playerName", "time",
+                                 "xg", "xgot", "shotType", "situation", "bodyPart"]]
         
-        ax[0].scatter(shot["plot_x"],
-                      shot["plot_y"],
-                      s = np.sqrt(shot["xg"]) * 1000,
-                      c = colour,
-                      alpha = 0.9)
+        # Plot the team's shots
+        fig.add_trace(go.Scatter(x = 100 - team_shots["plot_x"],
+                                 y = team_shots["plot_y"],
+                                 mode = "markers",
+
+                                 customdata = team_customdata,
+                                 
+                                 marker = dict(size = np.sqrt(team_shots["xg"]) * 75,
+                                                color = team_shots["shotType"].map(shot_colours),
+                                                opacity = 0.9,
+                                               line = dict(color = "#CCCCCC",
+                                                          width = 1)),
+                                 showlegend = False,
+                                 hovertemplate=("<b>%{customdata[0]} · %{customdata[1]}'</b><br>" 
+                                                "<br>" 
+                                                "xG : %{customdata[2]:.2f} " 
+                                                " &nbsp;&nbsp; " 
+                                                "xGOT : %{customdata[3]:.2f}" 
+                                                "<br><br>" "%{customdata[4]} · " 
+                                                "%{customdata[5]} · " 
+                                                "%{customdata[6]}" 
+                                                "<extra></extra>" )))
+        
+        # Annotate metrics
+        fig.add_annotation(x = 2,
+                           y = 56,
+                           text = f"OPEN PLAY xG : {open_xg:.2f}",
+                           showarrow = False,
+                           xanchor = "left",
+                           yanchor = "middle",
+                           font = dict(size = 14,
+                                       color = "#CCCCCC",
+                                       family = "DIN Alternate"))
+        fig.add_annotation(x = 2,
+                           y = 52,
+                           text = f"SET PIECE xG : {set_piece_xg:.2f}",
+                           showarrow = False,
+                           xanchor = "left",
+                           yanchor = "middle",
+                           font = dict(size = 14,
+                                       color = "#CCCCCC",
+                                       family = "DIN Alternate"))
+
+        fig.add_annotation(x = 98,
+                           y = 56,
+                           text = f"xG / SHOT : {xg_per_shot:.2f}",
+                           showarrow = False,
+                           xanchor = "right",
+                           yanchor = "middle",
+                           font = dict(size = 14,
+                                       color = "#CCCCCC",
+                                       family = "DIN Alternate"))
+
+        fig.add_annotation(x = 98,
+                           y = 52,
+                           text = f"xGOT - xG : {shot_qual:.2f}",
+                           showarrow = False,
+                           xanchor = "right",
+                           yanchor = "middle",
+                           font = dict(size = 14,
+                                       color = "#CCCCCC",
+                                       family = "DIN Alternate"))
+
+        fig.update_layout(title = dict(text = f"{team} Shot Map",
+                                    x = 0.05,
+                                    xanchor = "left",
+                                    y = 0.95,
+                                    yanchor = "middle",
+                                    font = dict(size = 16,
+                                                color = "white",
+                                                family = "DIN Alternate")),
+                                              
+                           hoverlabel = dict(bgcolor = "#3F434A",
+                                             bordercolor = "#CCCCCC",
+                                             font = dict( color = "#CCCCCC",
+                                                         size = 12,
+                                                         family = "DIN Alternate"),
+                                             align = "auto"))
+
+        # Save figure as html
+        fig.write_html(html_folder / f"{team}_shot_map.html",
+                      auto_open = False,
+                      config = {"responsive" : True})
+
+        
+        fig.show()
+
+        
+        
+
+    # -----------------------------------------------
+    # NON-INTERACTIVE VERSION
+    # -----------------------------------------------
+    
+    else:
+
+        
+        # Create the pitch
+        pitch = VerticalPitch(pitch_type = "opta",
+                      pitch_color = "#404040",
+                      line_color = "#CCCCCC",
+                      linewidth = 0.75,
+                      half = True)
+        
+        fig = plt.figure(figsize = (7,7),
+                        facecolor = "#404040")
+
+        gs = GridSpec(2,1,
+                     height_ratios = [5,1],
+                     figure = fig)
+        ax = fig.add_subplot(gs[0])
+        legend_ax = fig.add_subplot(gs[1])
+        legend_ax.axis("off")
+
+        pitch.draw(ax=ax)
+    
+        # Plot the team shots
+        for _, shot in team_shots.iterrows():
+    
+            colour = shot_colours[shot["shotType"]]
             
-
-    for _, shot in away_shots.iterrows():
-
-        colour = shot_colours[shot["shotType"]]
+            ax.scatter(shot["plot_x"],
+                          shot["plot_y"],
+                          s = np.sqrt(shot["xg"]) * 1000,
+                          c = colour,
+                          alpha = 0.9)
         
-        ax[1].scatter(shot["plot_x"],
-                      shot["plot_y"],
-                      s = np.sqrt(shot["xg"]) * 1000,
-                      c = colour,
-                      alpha = 0.9)
+        # Create dummy scatter points for the legened
+        legend_elements = [
+            Line2D([0], [0],
+                   marker = "o",
+                   color = "none",
+                   markerfacecolor = shot_colours["goal"],
+                   markeredgecolor = "white",
+                   markersize = 12,
+                   label = "Goal"),
+            
+            Line2D([0], [0],
+                   marker = "o",
+                   color = "none",
+                   markerfacecolor = shot_colours["save"],
+                   markeredgecolor = "white",
+                   markersize = 12,
+                   label = "Saved"),
+            
+            Line2D([0], [0],
+                   marker = "o",
+                   color = "none",
+                   markerfacecolor = shot_colours["block"],
+                   markeredgecolor = "white",
+                   markersize = 12,
+                   label = "Blocked"),
+           
+            Line2D([0], [0],
+                   marker = "o",
+                   color = "none",
+                   markerfacecolor = shot_colours["miss"],
+                   markeredgecolor = "white",
+                   markersize = 12,
+                   label = "Miss"),
+            
+            Line2D([0], [0],
+                   marker = "o",
+                   color = "none",
+                   markerfacecolor = shot_colours["post"],
+                   markeredgecolor = "white",
+                   markersize=12,
+                   label="Post")]
     
-    # Create dummy scatter points for the legened
-    legend_elements = [
-        Line2D([0], [0],
-               marker = "o",
-               color = "none",
-               markerfacecolor = shot_colours["goal"],
-               markeredgecolor = "white",
-               markersize = 20,
-               label = "Goal"),
-        
-        Line2D([0], [0],
-               marker = "o",
-               color = "none",
-               markerfacecolor = shot_colours["save"],
-               markeredgecolor = "white",
-               markersize = 20,
-               label = "Saved"),
-        
-        Line2D([0], [0],
-               marker = "o",
-               color = "none",
-               markerfacecolor = shot_colours["block"],
-               markeredgecolor = "white",
-               markersize = 20,
-               label = "Blocked"),
-       
-        Line2D([0], [0],
-               marker = "o",
-               color = "none",
-               markerfacecolor = shot_colours["miss"],
-               markeredgecolor = "white",
-               markersize = 20,
-               label = "Miss"),
-        
-        Line2D([0], [0],
-               marker = "o",
-               color = "none",
-               markerfacecolor = shot_colours["post"],
-               markeredgecolor = "white",
-               markersize=20,
-               label="Post")]
+        shot_legend = legend_ax.legend(handles = legend_elements,
+                  loc = "upper center",
+                  ncol = 5, 
+                  frameon = False,
+                  labelcolor = "#CCCCCC",
+                  fontsize = 12)
 
-    fig.legend(handles = legend_elements,
-              loc = "lower center",
-              ncol = 5, 
-              bbox_to_anchor = (0.5,0.1),
-              frameon = False,
-              labelcolor = "#404040",
-              fontsize = 16)
-
-    # Plot sample xG values for scale
-    xg_values = [0.1,0.3,0.5]
-
-    xg_legend = [Line2D([0],[0],
-                       marker = 'o',
-                       color = "none",
-                       markerfacecolor = "#808080",
-                       markeredgecolor = "white",
-                       markersize = np.sqrt(np.sqrt(xg) * 1000),
-                       label =f"{xg:.1f} xG")
-                    for xg in xg_values]
-
-    fig.legend(handles = xg_legend,
-              loc = "lower center",
-              ncol = 3,
-              bbox_to_anchor = (0.5,0.05),
-              frameon = False,
-              labelcolor = "#404040",
-              fontsize = 16)
-
-    # Annotate metrics on the figures
-    # Home stats 
-    ax[0].text(98,55, f"OPEN PLAY xG: {home_open_xg:.2f}",
-               fontsize = 16,
-               color = "#CCCCCC",
-               ha = "left",
-               va = "center")
-    ax[0].text(98,52, f"SET PIECE xG: {home_set_piece_xg:.2f}",
-               fontsize = 16,
-               color = "#CCCCCC",
-               ha = "left",
-               va = "center")
-    ax[0].text(2,55, f"xG / SHOT: {home_xg_per_shot:.2f}",
-               fontsize = 16,
-               color = "#CCCCCC",
-               ha = "right",
-               va = "center")
-    ax[0].text(2,52, f"xGOT - xG: {home_qual:.2f}",
-               fontsize = 16,
-               color = "#CCCCCC",
-               ha = "right",
-               va = "center")
-    # Away stats
-    ax[1].text(98,55, f"OPEN PLAY xG: {away_open_xg:.2f}",
-               fontsize = 16,
-               color = "#CCCCCC",
-               ha = "left",
-               va = "center")
-    ax[1].text(98,52, f"SET PIECE xG: {away_set_piece_xg:.2f}",
-               fontsize = 16,
-               color = "#CCCCCC",
-               ha = "left",
-               va = "center")
-    ax[1].text(2,55, f"xG / SHOT: {away_xg_per_shot:.2f}",
-               fontsize = 16,
-               color = "#CCCCCC",
-               ha = "right",
-               va = "center")
-    ax[1].text(2,52, f"xGOT - xG: {away_qual:.2f}",
-               fontsize = 16,
-               color = "#CCCCCC",
-               ha = "right",
-               va = "center")
+        legend_ax.add_artist(shot_legend)
     
-    # Add titles
-    ax[0].set_title(f"{home_team} Shot Map",
-                   fontsize = 20,
-                   color = "#2E2E2E",
-                   pad = 10,
-                   loc = "left")
+        # Plot sample xG values for scale
+        xg_values = [0.1,0.3,0.5]
     
-    ax[1].set_title(f"{away_team} Shot Map",
-                   fontsize = 20,
-                   color = "#2E2E2E",
-                   pad = 10,
-                   loc = "left")
-
-    # Save the figure
-    fig.savefig(figures_folder / "shot_map.png",
-                format = "png",
-                dpi = 150,
-                bbox_inches = "tight")
-
-    plt.show()
+        xg_legend = [Line2D([0],[0],
+                           marker = 'o',
+                           color = "none",
+                           markerfacecolor = "#808080",
+                           markeredgecolor = "white",
+                           markersize = np.sqrt(np.sqrt(xg) * 1000),
+                           label =f"{xg:.1f} xG")
+                        for xg in xg_values]
+    
+        legend_ax.legend(handles = xg_legend,
+                  loc = "lower center",
+                  ncol = 3,
+                  frameon = False,
+                  labelcolor = "#CCCCCC",
+                  fontsize = 12)
+    
+        # Annotate metrics on the figures
+        ax.text(98,55, f"OPEN PLAY xG: {open_xg:.2f}",
+                   fontsize = 12,
+                   color = "#CCCCCC",
+                   ha = "left",
+                   va = "center")
+        ax.text(98,52, f"SET PIECE xG: {set_piece_xg:.2f}",
+                   fontsize = 12,
+                   color = "#CCCCCC",
+                   ha = "left",
+                   va = "center")
+        ax.text(2,55, f"xG / SHOT: {xg_per_shot:.2f}",
+                   fontsize = 12,
+                   color = "#CCCCCC",
+                   ha = "right",
+                   va = "center")
+        ax.text(2,52, f"xGOT - xG: {shot_qual:.2f}",
+                   fontsize = 12,
+                   color = "#CCCCCC",
+                   ha = "right",
+                   va = "center")
+        
+        # Add titles
+        ax.set_title(f"{team} Shot Map",
+                       fontsize = 16,
+                       color = "white",
+                       pad = 10,
+                       loc = "center")
+    
+        # Save the figure
+        fig.savefig(figures_folder / f"{team}_shot_map.png",
+                    format = "png",
+                    dpi = 150,
+                    bbox_inches = "tight")
+    
+        plt.show()
 
     
